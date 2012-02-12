@@ -1357,37 +1357,14 @@ static int s3cfb_probe(struct platform_device *pdev)
 	fbdev->wq_count = 0;
 	init_waitqueue_head(&fbdev->wq);
 #endif
-	
-	/* irq */
-	fbdev->irq = platform_get_irq(pdev, 0);
-	if (request_irq(fbdev->irq, s3cfb_irq_frame, IRQF_SHARED,
-			pdev->name, fbdev)) {
-		dev_err(fbdev->dev, "request_irq failed\n");
-		ret = -EINVAL;
-		goto err_irq;
-	}
+
 #if 1
 	// added by jamie (2009.08.18)
 	// enable VSYNC
 	s3cfb_set_vsync_interrupt(fbdev, 1);
 	s3cfb_set_global_interrupt(fbdev, 1);
 #endif
-
-#ifdef CONFIG_FB_S3C_TRACE_UNDERRUN
-	if (request_irq(platform_get_irq(pdev, 1), s3cfb_irq_fifo,
-			IRQF_DISABLED, pdev->name, fbdev)) {
-		dev_err(fbdev->dev, "request_irq failed\n");
-		ret = -EINVAL;
-		goto err_irq;
-	}
-
-	s3cfb_set_fifo_interrupt(fbdev, 1);
-	dev_info(fbdev->dev, "fifo underrun trace\n");
-#endif
-#ifdef CONFIG_FB_S3C_MDNIE
-	s3c_mdnie_setup();
-#endif
-
+	
 	/* init global */
 	s3cfb_init_global();
 
@@ -1405,6 +1382,31 @@ static int s3cfb_probe(struct platform_device *pdev)
 	s3cfb_enable_window(pdata->default_win);
 
 	s3cfb_display_on(fbdev);
+
+	/* irq */
+	fbdev->irq = platform_get_irq(pdev, 0);
+	if (request_irq(fbdev->irq, s3cfb_irq_frame, IRQF_SHARED,
+			pdev->name, fbdev)) {
+		dev_err(fbdev->dev, "request_irq failed\n");
+		ret = -EINVAL;
+		goto err_irq;
+	}
+
+#ifdef CONFIG_FB_S3C_TRACE_UNDERRUN
+	if (request_irq(platform_get_irq(pdev, 1), s3cfb_irq_fifo,
+			IRQF_DISABLED, pdev->name, fbdev)) {
+		dev_err(fbdev->dev, "request_irq failed\n");
+		ret = -EINVAL;
+		goto err_irq;
+	}
+
+	s3cfb_set_fifo_interrupt(fbdev, 1);
+	dev_info(fbdev->dev, "fifo underrun trace\n");
+#endif
+#ifdef CONFIG_FB_S3C_MDNIE
+	s3c_mdnie_setup();
+#endif
+
 
 #ifdef CONFIG_FB_S3C_LCD_INIT
 	/* panel control */
