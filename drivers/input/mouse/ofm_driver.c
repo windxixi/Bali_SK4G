@@ -341,7 +341,7 @@ static void ofm_motion_func(struct work_struct *work){
 
 		#define OJ_DEGREE 7
 		
-		const unsigned int oj_sht_tbl[OJ_DEGREE] = {30, 1750, 2000, 2250, 2500, 2750, 2929};
+		const unsigned int oj_sht_tbl[OJ_DEGREE] = {120, 1750, 2000, 2250, 2500, 2750, 2929};
 		const unsigned char oj_pxsum_tbl[OJ_DEGREE] = {0, 0, 20, 30, 40, 50, 60};
 		int i, sht;
 		unsigned char motion, shutter_upper, shutter_lower, pxsum, squal;
