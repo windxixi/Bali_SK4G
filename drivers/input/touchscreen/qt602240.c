@@ -108,6 +108,7 @@ static int firmware_ret_val = -1;
 //20100217 julia
 static uint8_t cal_check_flag = 0u;
 static int CAL_THR = 10;
+uint8_t not_yet_count = 0; //eplus0628
 
 //20100615 sooo.shin
 static int qt_initial_ok=0;
@@ -2658,6 +2659,7 @@ void check_chip_calibration(unsigned char one_touch_input_flag)
 					good_check_flag = 0;
 					qt_timer_state =0;
 					qt_time_point = jiffies_to_msecs(jiffies);
+					not_yet_count = 0; // eplus0628
 
 					dprintk("[TSP] reset acq atchcalst=%d, atchcalsthr=%d\n", acquisition_config.atchcalst, acquisition_config.atchcalsthr );
 					/* Write normal acquisition config back to the chip. */
@@ -2696,7 +2698,7 @@ void check_chip_calibration(unsigned char one_touch_input_flag)
 #endif
 			}
 //Org of Dan			else if((tch_ch + CAL_THR /*10*/ ) <= atch_ch)
-			else if(atch_ch >= 8)		//jwlee add 0325
+			else if(atch_ch >= 6)	//8	//eplus0628
 			{
 #if 1
 				printk("[TSP] calibration was bad\n");
@@ -2716,6 +2718,18 @@ void check_chip_calibration(unsigned char one_touch_input_flag)
 				printk("[TSP] calibration was not decided yet\n");
 				/* we cannot confirm if good or bad - we must wait for next touch  message to confirm */
 				cal_check_flag = 1u;
+				
+				not_yet_count++;
+				if (tch_ch==0 && atch_ch==0)
+				{
+					not_yet_count = 0;
+				}
+				else if(not_yet_count >= 10)
+				{
+					printk("[TSP] NOT YET over 10 times\n");
+					calibrate_chip();
+					not_yet_count = 0;
+				}				
 				/* Reset the 100ms timer */
 				qt_timer_state=0;//0430 hugh 1 --> 0
 				qt_time_point = jiffies_to_msecs(jiffies);
@@ -2847,7 +2861,7 @@ void TSP_forced_release(void)
 
 		input_report_abs(qt602240->input_dev, ABS_MT_POSITION_X, fingerInfo[i].x);
 		input_report_abs(qt602240->input_dev, ABS_MT_POSITION_Y, fingerInfo[i].y);
-		input_report_abs(qt602240->input_dev, ABS_MT_TOUCH_MAJOR, fingerInfo[i].pressure);	// 0ÀÌ¸é Release, ¾Æ´Ï¸é Press »óÅÂ(Down or Move)
+		input_report_abs(qt602240->input_dev, ABS_MT_TOUCH_MAJOR, fingerInfo[i].pressure);	// 0æžæ Release, é…’èªæ Press æƒ‘æ€•(Down or Move)
 		input_report_abs(qt602240->input_dev, ABS_MT_WIDTH_MAJOR, fingerInfo[i].size_id);	// (ID<<8) | Size
 		input_mt_sync(qt602240->input_dev);
 
@@ -2879,7 +2893,7 @@ void TSP_forced_release_forOKkey(void)
 
 		input_report_abs(qt602240->input_dev, ABS_MT_POSITION_X, fingerInfo[i].x);
 		input_report_abs(qt602240->input_dev, ABS_MT_POSITION_Y, fingerInfo[i].y);
-		input_report_abs(qt602240->input_dev, ABS_MT_TOUCH_MAJOR, fingerInfo[i].pressure);	// 0ÀÌ¸é Release, ¾Æ´Ï¸é Press »óÅÂ(Down or Move)
+		input_report_abs(qt602240->input_dev, ABS_MT_TOUCH_MAJOR, fingerInfo[i].pressure);	// 0æžæ Release, é…’èªæ Press æƒ‘æ€•(Down or Move)
 		input_report_abs(qt602240->input_dev, ABS_MT_WIDTH_MAJOR, fingerInfo[i].size_id);	// (ID<<8) | Size
 		input_mt_sync(qt602240->input_dev);
 
@@ -2964,7 +2978,7 @@ void  get_message(struct work_struct * p)
 						fingerInfo[i].pressure= 0;
 						input_report_abs(qt602240->input_dev, ABS_MT_POSITION_X, fingerInfo[i].x);
 						input_report_abs(qt602240->input_dev, ABS_MT_POSITION_Y, fingerInfo[i].y);
-						input_report_abs(qt602240->input_dev, ABS_MT_TOUCH_MAJOR, fingerInfo[i].pressure);	// 0ÀÌ¸é Release, ¾Æ´Ï¸é Press »óÅÂ(Down or Move)
+						input_report_abs(qt602240->input_dev, ABS_MT_TOUCH_MAJOR, fingerInfo[i].pressure);	// 0æžæ Release, é…’èªæ Press æƒ‘æ€•(Down or Move)
 						input_report_abs(qt602240->input_dev, ABS_MT_WIDTH_MAJOR, fingerInfo[i].size_id);	// (ID<<8) | Size
 						input_mt_sync(qt602240->input_dev);
 			
@@ -3091,7 +3105,7 @@ void  get_message(struct work_struct * p)
 				fingerInfo[id].size_id= (id<<8)|size;
 				fingerInfo[id].pressure= 0;
 				bChangeUpDn= 1;
-				printk("[TSP]### Finger[%d] Up (%d,%d) - touch num is (%d)  status=0x%02x, orient = %d\n", id, fingerInfo[id].x, fingerInfo[id].y , --qt_touch_num_state[id], quantum_msg[1], touchscreen_config.orient);
+				//printk("[TSP]### Finger[%d] Up (%d,%d) - touch num is (%d)  status=0x%02x, orient = %d\n", id, fingerInfo[id].x, fingerInfo[id].y , --qt_touch_num_state[id], quantum_msg[1], touchscreen_config.orient);
 			}
 			else if ( (quantum_msg[1] & 0x80) && (quantum_msg[1] & 0x40) )	// Detect & Press
 			{
@@ -3114,7 +3128,7 @@ void  get_message(struct work_struct * p)
 				fingerInfo[id].x= (int16_t)x;
 				fingerInfo[id].y= (int16_t)y;
 				bChangeUpDn= 1;
-				printk("[TSP]### Finger[%d] Down (%d,%d) - touch num is (%d)   status=0x%02x, orient = %d\n", id, fingerInfo[id].x, fingerInfo[id].y , ++qt_touch_num_state[id], quantum_msg[1], touchscreen_config.orient);
+				//printk("[TSP]### Finger[%d] Down (%d,%d) - touch num is (%d)   status=0x%02x, orient = %d\n", id, fingerInfo[id].x, fingerInfo[id].y , ++qt_touch_num_state[id], quantum_msg[1], touchscreen_config.orient);
 			}
 			else if ( (quantum_msg[1] & 0x80) && (quantum_msg[1] & 0x10) )	// Detect & Move
 			{
@@ -3192,7 +3206,7 @@ void  get_message(struct work_struct * p)
 	
 				input_report_abs(qt602240->input_dev, ABS_MT_POSITION_X, fingerInfo[i].x);
 				input_report_abs(qt602240->input_dev, ABS_MT_POSITION_Y, fingerInfo[i].y);
-				input_report_abs(qt602240->input_dev, ABS_MT_TOUCH_MAJOR, fingerInfo[i].pressure);	// 0ÀÌ¸é Release, ¾Æ´Ï¸é Press »óÅÂ(Down or Move)
+				input_report_abs(qt602240->input_dev, ABS_MT_TOUCH_MAJOR, fingerInfo[i].pressure);	// 0æžæ Release, é…’èªæ Press æƒ‘æ€•(Down or Move)
 				input_report_abs(qt602240->input_dev, ABS_MT_WIDTH_MAJOR, fingerInfo[i].size_id);	// (ID<<8) | Size
 				input_mt_sync(qt602240->input_dev);
 				
