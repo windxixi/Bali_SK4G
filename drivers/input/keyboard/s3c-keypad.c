@@ -320,7 +320,7 @@ static void keypad_timer_handler(unsigned long data)
 
 					}else{						
 							input_report_key(dev,pdata->keycodes[i],1);
-							printk("\nkey Pressed  : key %d map %d\n",i, pdata->keycodes[i]);
+							//printk("\nkey Pressed  : key %d map %d\n",i, pdata->keycodes[i]);
 				}
 						}
 			}
@@ -341,7 +341,7 @@ static void keypad_timer_handler(unsigned long data)
 						// for T839. if @ is pressed, p is also pressed, then lock up occurs(UI issue...). temporary, block p key when @ is pressed.
 					}else{
 							input_report_key(dev,pdata->keycodes[i],0);
-							printk("\nkey Released : %d  map %d\n",i,pdata->keycodes[i]);
+//							printk("\nkey Released : %d  map %d\n",i,pdata->keycodes[i]);
                                 }
             }
             }
@@ -435,7 +435,7 @@ static irqreturn_t s3c_keygpio_isr(int irq, void *dev_id)
 #endif
 
 	prev_key_status = key_status;
-	printk("s3c_keygpio_isr pwr key_status =%d\n", key_status);
+//	printk("s3c_keygpio_isr pwr key_status =%d\n", key_status);
 
 	return IRQ_HANDLED;
 }
@@ -506,7 +506,7 @@ static irqreturn_t s3c_keygpio_vol_up_isr(int irq, void *dev_id)
 	}									//NAGSM_Android_SEL_Kernel_Aakash_20100319
 #endif
 	
-       printk("s3c_keygpio_vol_up_isr key_status =%d,\n", key_status);
+//       printk("s3c_keygpio_vol_up_isr key_status =%d,\n", key_status);
        
         return IRQ_HANDLED;
 }
@@ -548,7 +548,7 @@ static irqreturn_t s3c_keygpio_vol_down_isr(int irq, void *dev_id)
 	INPUT_REPORT_KEY(dev, 58, key_status ? 0 : 1);
 #endif
 	}
-	printk("s3c_keygpio_vol_down_isr key_status =%d,\n", key_status);
+//	printk("s3c_keygpio_vol_down_isr key_status =%d,\n", key_status);
 
         return IRQ_HANDLED;
 }
@@ -651,7 +651,7 @@ static irqreturn_t s3c_keygpio_ok_isr(int irq, void *dev_id)
 		TSP_forced_release_forOKkey();
 	
 	prev_key_status = key_status;
-        printk("s3c_keygpio_ok_isr key_status =%d\n", key_status);
+     //   printk("s3c_keygpio_ok_isr key_status =%d\n", key_status);
         
         return IRQ_HANDLED;
 }
